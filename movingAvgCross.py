@@ -65,7 +65,7 @@ class MarketOnClosePortfolio():
     """Encapsulates the notion of a portfolio of positions based
     on a set of signals as provided by a Strategy.
 
-    Requires:q
+    Requires:
     symbol - A stock symbol which forms the basis of the portfolio.
     bars - A DataFrame of bars for a symbol set.
     signals - A pandas DataFrame of signals (1, 0, -1) for each symbol.
@@ -120,36 +120,37 @@ def plot_chart():
     fig.patch.set_facecolor('white')  # Set the outer colour to white
     ax1 = fig.add_subplot(211, ylabel='Price in $')
 
-    def plotPerformance():
+    def plot_performance():
         # Plot the closing price overlaid with the moving averages
-        bars['Close'].plot(ax=ax1, color='r', lw=2.)
-        signals[['short_mavg', 'long_mavg']].plot(ax=ax1, lw=2.)
+        bars['Close'].plot(ax=ax1, color='grey', lw=1.)
+        signals[['short_mavg', 'long_mavg']].plot(ax=ax1, lw=1.)
 
         # Plot the "buy" trades against closing price
         ax1.plot(signals.loc[signals.positions == 1.0].index,
                  signals.short_mavg[signals.positions == 1.0],
-                 '^', markersize=10, color='m')
+                 '^', markersize=6, color='g')
 
         # Plot the "sell" trades against closing price
         ax1.plot(signals.loc[signals.positions == -1.0].index,
                  signals.short_mavg[signals.positions == -1.0],
-                 'v', markersize=10, color='k')
+                 'v', markersize=6, color='k')
 
-    def plotReturns():
+    def plot_returns():
         # Plot the equity curve in dollars
         ax2 = fig.add_subplot(212, ylabel='Portfolio value in $')
-        returns['total'].plot(ax=ax2, lw=2.)
+        returns['total'].plot(ax=ax2, color='grey', lw=1.)
 
         # Plot the "buy" and "sell" trades against the equity curve
         ax2.plot(returns.loc[signals.positions == 1.0].index,
                  returns.total[signals.positions == 1.0],
-                 '^', markersize=10, color='m')
+                 '^', markersize=6, color='g')
         ax2.plot(returns.loc[signals.positions == -1.0].index,
                  returns.total[signals.positions == -1.0],
-                 'v', markersize=10, color='k')
-    plotPerformance()
-    plotReturns()
-    # Plot the figure
+                 'v', markersize=6, color='k')
+
+    # Plot the chart
+    plot_performance()
+    plot_returns()
     fig.show()
 
 
