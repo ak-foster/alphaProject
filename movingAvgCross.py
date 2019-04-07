@@ -21,38 +21,32 @@ class MovingAverageCrossStrategy():
     symbol - A stock symbol on which to form a strategy on.
     bars - A DataFrame of bars for the above symbol.
     short_window - Lookback period for short moving average.
-    long_window - Lookback period for long moving average."""
+    long_window - Lookback period for long moving average.
+    """
 
-    def __init__(self, symbol, bars, short_window=30, long_window=120):
+    def __init__(self, symbol, bars, short_window=30, mid_window=60, long_window=120):
         self.symbol = symbol
         self.bars = bars
 
         self.short_window = short_window
+        self.mid_window = mid_window
         self.long_window = long_window
 
     def generate_signals(self):
-        """Returns the DataFrame of symbols containing the signals
-        to go long, short or hold (1, -1 or 0)."""
+        """
+        Returns the DataFrame of symbols containing the signals
+        to go long, short or hold (1, -1 or 0).
+        """
         signals = pd.DataFrame(index=dfl.index)
         signals['signal'] = 0.0
 
-        # Set number of days to be used for calculating a moving average
-        S = 30
-        M = 90
-        L = 120
-
-        """
-        # Create the set of short and long simple moving averages over the
-        # respective periods
-        for t in timePeriods:
-            signals[str(t) + 'd_SMA'] = bars['Close'].rolling(window=t, center=False, min_periods=1).mean()
-        """
-        signals['short_mavg'] = bars['Close'].rolling(window=S, center=False, min_periods=1).mean()
-        signals['long_mavg'] = bars['Close'].rolling(window=L, center=False, min_periods=1).mean()
+        signals['short_mavg'] = bars['Close'].rolling(window=self.short_window, center=False, min_periods=1).mean()
+        signals['mid_mavg'] = bars['Close'].rolling(window=self.mid_window, center=False, min_periods=1).mean()
+        signals['long_mavg'] = bars['Close'].rolling(window=self.long_window, center=False, min_periods=1).mean()
 
         # Create a 'signal' (invested or not invested) when the short moving average crosses the long
         # moving average, but only for the period greater than the shortest moving average window
-        signals['signal'][:] = np.where(signals['short_mavg'][:] > signals['long_mavg'][:], 1.0, 0.0)
+        signals['signal'][:] = np.where(np.logical_and(signals['short_mavg'][:] > signals['mid_mavg'][:], signals['mid_mavg'][:] > signals['long_mavg'][:]), 1.0, 0.0)
 
         # Take the difference of the signals in order to generate actual trading orders
         signals['positions'] = signals['signal'].diff()
@@ -62,14 +56,16 @@ class MovingAverageCrossStrategy():
 
 
 class MarketOnClosePortfolio():
-    """Encapsulates the notion of a portfolio of positions based
+    """
+    Encapsulates the notion of a portfolio of positions based
     on a set of signals as provided by a Strategy.
 
     Requires:
     symbol - A stock symbol which forms the basis of the portfolio.
     bars - A DataFrame of bars for a symbol set.
     signals - A pandas DataFrame of signals (1, 0, -1) for each symbol.
-    initial_capital - The amount in cash at the start of the portfolio."""
+    initial_capital - The amount in cash at the start of the portfolio.
+    """
 
     def __init__(self, symbol, bars, signals, initial_capital):
         self.symbol = symbol
@@ -123,7 +119,7 @@ def plot_chart():
     def plot_performance():
         # Plot the closing price overlaid with the moving averages
         bars['Close'].plot(ax=ax1, color='grey', lw=1.)
-        signals[['short_mavg', 'long_mavg']].plot(ax=ax1, lw=1.)
+        signals[['short_mavg', 'mid_mavg','long_mavg']].plot(ax=ax1, lw=1.)
 
         # Plot the "buy" trades against closing price
         ax1.plot(signals.loc[signals.positions == 1.0].index,
